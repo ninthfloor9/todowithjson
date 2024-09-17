@@ -1,49 +1,45 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useRecoilRefresher_UNSTABLE, useRecoilValue } from "recoil";
+import { fetchPosts } from "./recoil";
+import { postPosts } from "./fetch";
 
-const postUrl = "https://jsonplaceholder.typicode.com/posts";
-export const App = () => {
-  const [postList, setPostList] = useState(null);
+const OnSubmitHandler = async (e) => {
+  e.preventDefault();
+  const title = e.target.title.value;
+  const body = e.target.body.value;
+  const author = e.target.author.value;
+  try {
+    const response = await postPosts(title, body, author);
+    console.log(response);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    const response = await axios.get(postUrl);
-    setPostList(response.data);
-  };
-
-  const onSubmitHandler = async (e) => {
-    e.preventDefault();
-    const title = e.target.title.value;
-    const body = e.target.body.value;
-    try {
-      const response = await axios.post(postUrl, { title, body });
-      console.log(response); // 응답 코드 확인
-      fetchData();
-    } catch (error) {
-      console.error(error);
-    }
-  };
+// Render
+export const App3 = () => {
+  const data = useRecoilValue(fetchPosts);
+  const refresh = useRecoilRefresher_UNSTABLE(fetchPosts);
 
   return (
-    <div className="App">
-      <h1>Todo List</h1>
-      <form onSubmit={onSubmitHandler}>
+    <div>
+      {/* 4. render getPosts */}
+      {data?.map((data) => (
+        <div key={data._id}>
+          <h4 className="title">{data.title}</h4>
+          <p className="body">{data.body}</p>
+          <p className="author">{data.author}</p>
+        </div>
+      ))}
+      {/* 5. input form */}
+      <form onSubmit={OnSubmitHandler}>
         <input name="title" />
         <input name="body" />
-        <input type="submit" value="추가" />
+        <input name="author" />
+        <input type="submit" value="Add" />
+        {/* this is a button with useRecoilRefresher_UNSTABLE */}
+        <button onClick={() => refresh()}>refresh</button>
       </form>
-      {postList ? (
-        <div>
-          <h2>Last Post:</h2>
-          <h3>{postList[postList.length - 1].title}</h3>
-          <p>{postList[postList.length - 1].body}</p>
-        </div>
-      ) : (
-        <p>Loading...</p>
-      )}
     </div>
   );
 };
